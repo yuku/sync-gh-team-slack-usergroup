@@ -1,0 +1,30 @@
+{
+  "name": "sync-gh-team-slack-usergroup",
+  "version": "1.0.0",
+  "description": "GitHub Action that syncs GitHub team to Slack UserGroup",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/main.ts -o dist",
+    "check": "tsc --noEmit",
+    "package": "npm run build",
+    "test": "npm run check"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/yuku/sync-gh-team-slack-usergroup"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "@actions/github": "^9.1.1",
+    "@slack/web-api": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "@vercel/ncc": "^0.45.0",
+    "typescript": "^5.9.3"
+  }
+}

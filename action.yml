@@ -1,0 +1,21 @@
+name: Sync GitHub Team to Slack User Group
+description: Synchronize members of a GitHub team to a Slack user group.
+inputs:
+  github_token:
+    description: GitHub token with org read permissions.
+    required: true
+  slack_token:
+    description: Slack Bot User OAuth Token.
+    required: true
+  github_org:
+    description: GitHub Organization name.
+    required: true
+  github_team_slug:
+    description: The slug of the GitHub team.
+    required: true
+  slack_user_group_id:
+    description: The ID of the Slack User Group.
+    required: true
+runs:
+  using: node20
+  main: dist/index.js
