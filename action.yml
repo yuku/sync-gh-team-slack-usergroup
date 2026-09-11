@@ -17,5 +17,5 @@ inputs:
     description: The ID of the Slack User Group.
     required: true
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
