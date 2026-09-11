@@ -14,7 +14,7 @@
     "url": "https://github.com/yuku/sync-gh-team-slack-usergroup.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Yuku TAKAHASHI",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
