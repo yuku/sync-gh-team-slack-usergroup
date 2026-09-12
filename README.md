@@ -12,6 +12,32 @@ GitHub Action that synchronizes members of a GitHub team to a Slack user group.
 | `github_team_slug` | Yes | The slug of the GitHub team. |
 | `slack_user_group_id` | Yes | The ID of the Slack User Group. |
 
+## Prerequisites
+
+### 1. GitHub Token Setup
+The default `GITHUB_TOKEN` provided by GitHub Actions does **not** have sufficient permissions to read Organization teams or verified domain emails. You need to provide a token with `read:org` permissions using one of the following methods:
+
+- **GitHub App (Recommended for Organizations):**
+  Create a GitHub App with Organization permissions:
+  - `Members`: **Read-only**
+  
+  Use `actions/create-github-app-token` in your workflow to generate a temporary token.
+
+- **Personal Access Token (PAT):**
+  Create a PAT (Classic) with the `read:org` scope, or a Fine-grained PAT with Organization `Members: Read-only` permission.
+
+### 2. Slack Token Setup
+Create a Slack App in your workspace and configure the following:
+
+- **Bot Token Scopes:**
+  - `usergroups:write` (To update user group members)
+  - `usergroups:read` (To check user group status)
+  - `users:read.email` (To look up users by verified email)
+  - `users:read` (To read user profiles)
+
+- **User Group ID:**
+  Copy the ID from your Slack user group settings (starts with `S`, e.g., `S01234567`). *Note: Slack User Groups require a paid Slack plan.*
+
 ## Usage
 
 ```yaml
