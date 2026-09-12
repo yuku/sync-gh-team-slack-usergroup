@@ -21,7 +21,7 @@ The default `GITHUB_TOKEN` provided by GitHub Actions does **not** have sufficie
   Create a GitHub App with Organization permissions:
   - `Members`: **Read-only**
   
-  Use `actions/create-github-app-token` in your workflow to generate a temporary token.
+  Set the App's **Client ID** in your repository variables (`vars.GH_APP_CLIENT_ID`) and **Private Key** in your repository secrets (`secrets.GH_APP_PRIVATE_KEY`).
 
 - **Personal Access Token (PAT):**
   Create a PAT (Classic) with the `read:org` scope, or a Fine-grained PAT with Organization `Members: Read-only` permission.
@@ -30,13 +30,13 @@ The default `GITHUB_TOKEN` provided by GitHub Actions does **not** have sufficie
 Create a Slack App in your workspace and configure the following:
 
 - **Bot Token Scopes:**
-  - `usergroups:write` (To update user group members)
-  - `usergroups:read` (To check user group status)
-  - `users:read.email` (To look up users by verified email)
-  - `users:read` (To read user profiles)
+  - `usergroups:write`
+  - `usergroups:read`
+  - `users:read.email`
+  - `users:read`
 
 - **User Group ID:**
-  Copy the ID from your Slack user group settings (starts with `S`, e.g., `S01234567`). *Note: Slack User Groups require a paid Slack plan.*
+  Copy the ID from your Slack user group settings (starts with `S`, e.g., `S01234567`).
 
 ## Usage
 
@@ -61,15 +61,15 @@ jobs:
     steps:
       - name: Generate GitHub App Token
         id: generate-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ secrets.GH_APP_ID }}
+          client-id: ${{ vars.GH_APP_CLIENT_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       - uses: yuku/sync-gh-team-slack-usergroup@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.generate-token.outputs.token }}
           slack_token: ${{ secrets.SLACK_BOT_TOKEN }}
           github_org: your-org
           github_team_slug: ${{ matrix.github_team_slug }}
