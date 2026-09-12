@@ -41,30 +41,6 @@ Create a Slack App in your workspace and configure the following:
 ## Usage
 
 ```yaml
-name: Sync GitHub Team to Slack User Group
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 * * * *'
-
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: yuku/sync-gh-team-slack-usergroup@v1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          slack_token: ${{ secrets.SLACK_BOT_TOKEN }}
-          github_org: your-org
-          github_team_slug: platform-team
-          slack_user_group_id: S01234567
-```
-
-### Sync multiple teams with a matrix
-
-```yaml
 name: Sync GitHub Teams to Slack User Groups
 
 on:
@@ -83,7 +59,14 @@ jobs:
           - github_team_slug: security-team
             slack_user_group_id: S07654321
     steps:
-      - uses: actions/checkout@v4
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
       - uses: yuku/sync-gh-team-slack-usergroup@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
