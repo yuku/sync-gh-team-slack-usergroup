@@ -37421,7 +37421,7 @@ const web_api_1 = __nccwpck_require__(5105);
 function getRequiredInput(name) {
     return core.getInput(name, { required: true }).trim();
 }
-async function getGitHubUserEmail(octokit, org, login) {
+async function getGitHubUserEmails(octokit, org, login) {
     const result = await octokit.graphql(`
       query GetGitHubUserEmail($login: String!, $org: String!) {
         user(login: $login) {
@@ -37433,8 +37433,11 @@ async function getGitHubUserEmail(octokit, org, login) {
         login,
         org,
     });
-    const verifiedEmail = result.user?.organizationVerifiedDomainEmails?.find(Boolean);
-    return verifiedEmail ?? result.user?.email ?? null;
+    const candidates = [
+        ...(result.user?.organizationVerifiedDomainEmails ?? []),
+        result.user?.email,
+    ].filter((email) => Boolean(email));
+    return [...new Set(candidates)];
 }
 function isSlackUserNotFoundError(error) {
     if (!error || typeof error !== 'object') {
@@ -37459,27 +37462,31 @@ async function run() {
     core.info(`Fetched ${members.length} GitHub team member(s) from ${githubOrg}/${githubTeamSlug}.`);
     const slackUserIds = new Set();
     for (const member of members) {
-        const email = await getGitHubUserEmail(octokit, githubOrg, member.login);
-        if (!email) {
+        const emails = await getGitHubUserEmails(octokit, githubOrg, member.login);
+        if (emails.length === 0) {
             core.warning(`Skipping ${member.login}: no verified organization or public email found.`);
             continue;
         }
-        try {
-            const lookupResponse = await slackClient.users.lookupByEmail({ email });
-            const slackUserId = lookupResponse.user?.id;
-            if (!slackUserId) {
-                core.warning(`Skipping ${member.login}: Slack lookup for ${email} returned no user ID.`);
-                continue;
+        let slackUserId = null;
+        for (const email of emails) {
+            try {
+                const lookupResponse = await slackClient.users.lookupByEmail({ email });
+                slackUserId = lookupResponse.user?.id ?? null;
+                if (slackUserId) {
+                    break;
+                }
             }
-            slackUserIds.add(slackUserId);
-        }
-        catch (error) {
-            if (isSlackUserNotFoundError(error)) {
-                core.warning(`Skipping ${member.login}: no Slack user found for ${email}.`);
-                continue;
+            catch (error) {
+                if (!isSlackUserNotFoundError(error)) {
+                    throw error;
+                }
             }
-            throw error;
         }
+        if (!slackUserId) {
+            core.warning(`Skipping ${member.login}: no Slack user found.`);
+            continue;
+        }
+        slackUserIds.add(slackUserId);
     }
     const users = [...slackUserIds].join(',');
     await slackClient.usergroups.users.update({

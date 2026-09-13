@@ -14,11 +14,11 @@ function getRequiredInput(name: string): string {
   return core.getInput(name, { required: true }).trim();
 }
 
-async function getGitHubUserEmail(
+async function getGitHubUserEmails(
   octokit: ReturnType<typeof github.getOctokit>,
   org: string,
   login: string,
-): Promise<string | null> {
+): Promise<string[]> {
   const result = await octokit.graphql<GitHubUserEmailQuery>(
     `
       query GetGitHubUserEmail($login: String!, $org: String!) {
@@ -34,9 +34,12 @@ async function getGitHubUserEmail(
     },
   );
 
-  const verifiedEmail = result.user?.organizationVerifiedDomainEmails?.find(Boolean);
+  const candidates = [
+    ...(result.user?.organizationVerifiedDomainEmails ?? []),
+    result.user?.email,
+  ].filter((email): email is string => Boolean(email));
 
-  return verifiedEmail ?? result.user?.email ?? null;
+  return [...new Set(candidates)];
 }
 
 function isSlackUserNotFoundError(error: unknown): boolean {
@@ -72,31 +75,36 @@ async function run(): Promise<void> {
   const slackUserIds = new Set<string>();
 
   for (const member of members) {
-    const email = await getGitHubUserEmail(octokit, githubOrg, member.login);
+    const emails = await getGitHubUserEmails(octokit, githubOrg, member.login);
 
-    if (!email) {
+    if (emails.length === 0) {
       core.warning(`Skipping ${member.login}: no verified organization or public email found.`);
       continue;
     }
 
-    try {
-      const lookupResponse = await slackClient.users.lookupByEmail({ email });
-      const slackUserId = lookupResponse.user?.id;
+    let slackUserId: string | null = null;
 
-      if (!slackUserId) {
-        core.warning(`Skipping ${member.login}: Slack lookup for ${email} returned no user ID.`);
-        continue;
+    for (const email of emails) {
+      try {
+        const lookupResponse = await slackClient.users.lookupByEmail({ email });
+        slackUserId = lookupResponse.user?.id ?? null;
+
+        if (slackUserId) {
+          break;
+        }
+      } catch (error) {
+        if (!isSlackUserNotFoundError(error)) {
+          throw error;
+        }
       }
-
-      slackUserIds.add(slackUserId);
-    } catch (error) {
-      if (isSlackUserNotFoundError(error)) {
-        core.warning(`Skipping ${member.login}: no Slack user found for ${email}.`);
-        continue;
-      }
-
-      throw error;
     }
+
+    if (!slackUserId) {
+      core.warning(`Skipping ${member.login}: no Slack user found.`);
+      continue;
+    }
+
+    slackUserIds.add(slackUserId);
   }
 
   const users = [...slackUserIds].join(',');

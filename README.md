@@ -20,8 +20,8 @@ The default `GITHUB_TOKEN` provided by GitHub Actions does **not** have sufficie
 - **GitHub App (Recommended for Organizations):**
   Create a GitHub App with Organization permissions:
   - `Members`: **Read-only**
-  
-  Set the App's **Client ID** in your repository variables (`vars.GH_APP_CLIENT_ID`) and **Private Key** in your repository secrets (`secrets.GH_APP_PRIVATE_KEY`).
+
+  Set the App's **App ID** in your repository variables (`vars.GH_APP_ID`) and **Private Key** in your repository secrets (`secrets.GH_APP_PRIVATE_KEY`).
 
 - **Personal Access Token (PAT):**
   Create a PAT (Classic) with the `read:org` scope, or a Fine-grained PAT with Organization `Members: Read-only` permission.
@@ -63,7 +63,7 @@ jobs:
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
-          client-id: ${{ vars.GH_APP_CLIENT_ID }}
+          app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
