@@ -66,6 +66,7 @@ jobs:
           app-id: ${{ vars.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          permission-members: read
 
       - uses: yuku/sync-gh-team-slack-usergroup@v1
         with:
